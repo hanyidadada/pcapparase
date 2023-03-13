@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "ip.h": "c",
+        "ethernet.h": "c",
+        "pcap.h": "c",
+        "in.h": "c",
+        "tcp.h": "c",
+        "parase.h": "c",
+        "if_arp.h": "c",
+        "udp.h": "c"
+    }
+}
