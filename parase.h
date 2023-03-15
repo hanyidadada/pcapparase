@@ -56,4 +56,6 @@ int showDNSFlags(const struct dnshdr* header);
 void showDomainName(const char *name);
 void showDnsType(unsigned short type);
 void showDnsClass(unsigned short type);
+void showTCPFlags(const struct tcphdr* header);
+void paraseHttp(char* header);
 #endif
