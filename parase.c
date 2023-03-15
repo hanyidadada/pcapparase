@@ -96,22 +96,27 @@ void paraseIP(const struct ip* header)
         destPort = ntohs(tcpHeader->th_dport);
         int ackNum = ntohl(tcpHeader->th_ack);
         int seqNum = ntohl(tcpHeader->th_seq);
-        printf("源端口号: %u\t目标端口号: %u\n序列号: %u\t确认号: %u\n偏移: %u\t窗口: %u\n", sourcePort, destPort, ackNum, seqNum, ntohs(tcpHeader->doff), ntohs(tcpHeader->window));
+        printf("源端口号: %u\t目标端口号: %u\n序列号: %u\t确认号: %u\n头部长度: %u\t窗口: %u\nn", sourcePort, destPort, ackNum, seqNum, tcpHeader->doff * 4, ntohs(tcpHeader->window));
         showTCPFlags(tcpHeader);
         if (tcpHeader->th_flags == 0x18) {
-            char *httpHeader = (char *)((u_char *)tcpHeader + sizeof(struct tcphdr));
+            char *httpHeader = (char *)((u_char *)tcpHeader + tcpHeader->doff * 4);
             if (sourcePort == 80) {
+                printf("class 1\n");
                 printf("--------------HTTP---------------\n");
                 printf("HTTP 响应\n");
                 paraseHttp(httpHeader);
             } else if (destPort == 80) {
+                printf("class 2\n");
+                printf("--------------HTTP---------------\n");
+                printf("HTTP 响应\n");
+                paraseHttp(httpHeader);
+            }else if (strstr(httpHeader, "HTTP") != NULL) {
+                printf("class 3\n");
                 printf("--------------HTTP---------------\n");
                 printf("HTTP 响应\n");
                 paraseHttp(httpHeader);
             }
-            
         }
-        
     } if (ipHeader->ip_p == IPPROTO_UDP) {
         printf("--------------UDP---------------\n");
         const struct udphdr* udpHeader;
@@ -128,7 +133,7 @@ void paraseIP(const struct ip* header)
 
 void showTCPFlags(const struct tcphdr* header)
 {
-    printf("Flags: %x\n", header->th_flags);
+    printf("Flags: 0x%x\n", header->th_flags);
 
     if (header->fin) {
         printf("FIN: Set\n");
@@ -165,33 +170,43 @@ void showTCPFlags(const struct tcphdr* header)
 
 void paraseHttp(char* header){
     char *buf[64];
-    char *temp, *outer_ptr;
+    char *temp, *save_ptr, *content;
     int len = INT32_MAX;
     int num = 0;
-
-    while ((buf[num] = strtok_r(header, "\r\n", &outer_ptr)) != NULL) {
-        header = NULL;
+    content = strstr(header, "\r\n\r\n");
+    if (content != NULL) {
+        content = strtok(content, "\r\n");
+    }
+    temp = header;
+    while ((buf[num] = strtok_r(temp, "\r\n", &save_ptr)) != NULL) {
+        temp = NULL;
+        if (content != NULL && len != INT32_MAX && strncmp(content, buf[num], len) == 0 ) {
+            num++;
+            break;
+        }
+        
         temp = strstr(buf[num], "Content-Length:");
         if (temp != NULL) {
             sscanf(buf[num], "Content-Length: %d", &len);
+            temp = NULL;
+        }
+        temp = strstr(buf[num], "CONTENT-LENGTH: ");
+        if (temp != NULL) {
+            sscanf(buf[num], "CONTENT-LENGTH: %d", &len);
+            temp = NULL;
         }
         num++;
-        if (strncmp(outer_ptr, "\r\n\r\n", 4) == 0) {
-
-            buf[num] = outer_ptr + 4;
-            break;
-        }
     }
-    if (len == INT32_MAX) {
-        len = 32;
+    if (len != INT32_MAX) {
+        buf[num-1][len] = '\0';
     }
     for (int i = 0; i < num; i++) {
-        if (i == num - 1) {
+        if (i == num - 1 && len != INT32_MAX && content != NULL) {
             buf[i][len] = '\0';
             int size = len > 32 ? 32 : len;
             printf("Content Hex(front %d):\n", size);
-            for (int j = 0; j < len; j++) {
-                printf("%x\t", buf[i][j]);
+            for (int j = 0; j < size; j++) {
+                printf("%x\t", (unsigned char)buf[i][j]);
             }
             printf("\n");
             printf("Content: %s\n", buf[i]);
@@ -199,9 +214,6 @@ void paraseHttp(char* header){
         }
         printf("%s\n", buf[i]);
     }
-    
-    
-    
 }
 
 void showIPType(uint8_t type)
