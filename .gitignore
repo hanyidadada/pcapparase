@@ -1,3 +1,5 @@
 *.o
 *.txt
 pcap-anlyze
+./result
+./.vscode/*
