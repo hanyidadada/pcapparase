@@ -115,9 +115,10 @@ void paraseIP(const struct ip *header)
             }
             const struct tlsheader *tlsHeader = (struct tlsheader *)((u_char *)tcpHeader + tcpHeader->doff * 4);
             while (datalen>0) {
+                tlslen = paraseTLS(tlsHeader);
                 if (tlslen == 0) {
                     tlslen = 1;
-                }                 
+                }
                 datalen-=tlslen;
                 tlsHeader = (struct tlsheader *)((u_char *)tcpHeader + tlslen);
             }
@@ -175,8 +176,7 @@ int paraseTLS(const struct tlsheader *header)
             printf("%x", *data);
             data++;
         }
-        if (size < TLSlen)
-        {
+        if (size < TLSlen) {
             printf("...\n");
         } else {
             printf("\n");
@@ -243,7 +243,7 @@ void paraseClientHello(uint8_t* data, int len)
     data+=2;
     while (extenlen > 0) {
         printf("Extension: \n");
-        int type = ntohs(* (uint16_t*)data);
+        uint16_t type = ntohs(* (uint16_t*)data);
         data+=2;
         showExtensiontype(type);
         int addlen = ntohs(* (uint16_t*)data);
@@ -253,13 +253,50 @@ void paraseClientHello(uint8_t* data, int len)
         case 0:
             showservername(data);
             break;
+        case 13:
+            showsignature(data);
+            break;
+        case 51:
+            showkeyshare(data);
+            break;
         default:
             break;
         }
         extenlen-=(addlen+4);
         data+=addlen;
     }
+}
+
+void showsignature(uint8_t* data)
+{
+    int len = ntohs(*((uint16_t*)data));
+    data+=2;
+    printf("Signature Hash Algorithms Length: %d\n", len);
+    for (int i = 0; i < len/2; i++) {
+        showSigtype(ntohs(*((uint16_t*)data)));
+        data+=2;
+    }
     
+}
+
+void showkeyshare(uint8_t* data)
+{
+    printf("Client Key Share Length: %d\n", ntohs(*((uint16_t*)data)));
+    data+=2;
+    showGrouptype(ntohs(*((uint16_t*)data)));
+    data+=2;
+    int len = ntohs(*((uint16_t*)data));
+    data+=2;
+    printf("Key Exchange Length: %d\n", len);
+    if (len == 0) {
+        return;
+    }
+    printf("Key Exchange: ");
+    for (int i = 0; i < len; i++) {
+        printf("%x", *data);
+        data++;
+    }
+    printf("\n");
 }
 
 void showservername(uint8_t* data)
@@ -272,15 +309,15 @@ void showservername(uint8_t* data)
         int name_len = ntohs(* (uint16_t*)data);
         data+=2;
         printf("Server Name length: %d\n", name_len);
-        char *buf;
-        buf = malloc(name_len + 1);
-        stpncpy(buf, data, name_len);
-        buf[name_len] = '\0';
-        printf("Server Name: %s\n", buf);
-        free(buf);
+        if (name_len) {
+            char *buf;
+            buf = malloc(name_len + 1);
+            stpncpy(buf, (char *)data, name_len);
+            buf[name_len] = '\0';
+            printf("Server Name: %s\n", buf);
+            free(buf);
+        }
     }
-    
-    
 }
 
 void paraseServerHello(uint8_t* data, int len)
@@ -316,6 +353,19 @@ void paraseServerHello(uint8_t* data, int len)
         int addlen = ntohs(* (uint16_t*)data);
         printf("Length: %d\n", addlen);
         data+=2;
+        switch (type) {
+        case 0:
+            showservername(data);
+            break;
+        case 13:
+            showsignature(data);
+            break;
+        case 51:
+            showkeyshare(data);
+            break;
+        default:
+            break;
+        }
         extenlen-=(addlen+4);
         data+=addlen; 
     }

@@ -11,4 +11,6 @@ int checkType(uint8_t type);
 int showHandshakeType(uint8_t type);
 void showCipherSuites(uint16_t data);
 void showExtensiontype(uint16_t data);
+void showGrouptype(uint16_t data);
+void showSigtype(uint16_t data);
 #endif

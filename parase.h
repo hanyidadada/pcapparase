@@ -70,4 +70,6 @@ void showHandshakeInfo(uint8_t* data, uint8_t type, int len);
 void paraseClientHello(uint8_t* data, int len);
 void paraseServerHello(uint8_t* data, int len);
 void showservername(uint8_t* data);
+void showkeyshare(uint8_t* data);
+void showsignature(uint8_t* data);
 #endif

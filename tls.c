@@ -19,13 +19,44 @@ void showExtensiontype(uint16_t data)
     char buf[64];
     int code;
     FILE* fp =fopen("./exten.dat", "r");
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 36; i++) {
         fscanf(fp, "%s %d\n", buf, &code);
         if (code == data) {
             printf("Type:  %s (%d)\n", buf, code);
-            break;
-        } 
+            return;
+        }
     }
+    printf("Type:  Unknown (%d)\n", data);
+}
+
+void showGrouptype(uint16_t data)
+{
+    char buf[64];
+    int code;
+    FILE* fp =fopen("./group.dat", "r");
+    for (int i = 0; i < 49; i++) {
+        fscanf(fp, "%d %s\n", &code, buf);
+        if (code == data) {
+            printf("Group:  %s (%d)\n", buf, code);
+            return;
+        }
+    }
+    printf("Group:  Unknown (%d)\n", data);
+}
+
+void showSigtype(uint16_t data)
+{
+    char buf[64];
+    int code;
+    FILE* fp =fopen("./signature.dat", "r");
+    for (int i = 0; i < 35; i++) {
+        fscanf(fp, "%4x %s\n", &code, buf);
+        if (code == data) {
+            printf("Signature Algorithm: %s (0x%4x)\n", buf, code);
+            return;
+        }
+    }
+    printf("Signature Algorithm:  Unknown (%x)\n", data);
 }
 
 int showHandshakeType(uint8_t type)
