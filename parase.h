@@ -12,6 +12,7 @@
 #include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define MAC_STR_LEN 18
@@ -45,6 +46,12 @@ struct dnsanswer{
 	unsigned short datalen;
 };
 
+struct tlsheader{
+	uint8_t recodtype;
+	uint16_t version;
+	uint16_t length;
+};
+
 # pragma pack()
 void packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 void showEthType(uint16_t type);
@@ -58,4 +65,9 @@ void showDnsType(unsigned short type);
 void showDnsClass(unsigned short type);
 void showTCPFlags(const struct tcphdr* header);
 void paraseHttp(char* header);
+int paraseTLS(const struct tlsheader* header);
+void showHandshakeInfo(uint8_t* data, uint8_t type, int len);
+void paraseClientHello(uint8_t* data, int len);
+void paraseServerHello(uint8_t* data, int len);
+void showservername(uint8_t* data);
 #endif
