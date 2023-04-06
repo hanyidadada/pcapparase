@@ -105,8 +105,7 @@ void paraseIP(const struct ip *header)
         printf("源端口号: %u\t目标端口号: %u\n序列号: %u\t确认号: %u\n头部长度: %u\t窗口: %u\n", sourcePort, destPort, ackNum, seqNum, tcpHeader->doff * 4, ntohs(tcpHeader->window));
         showTCPFlags(tcpHeader);
         datalen = ntohs(ipHeader->ip_len) - ipHeader->ip_hl * 4 - tcpHeader->doff * 4;
-        if (tcpHeader->th_flags == 0x18)
-        {
+        if (tcpHeader->th_flags == 0x18) {
             char *httpHeader = (char *)((u_char *)tcpHeader + tcpHeader->doff * 4);
             if (sourcePort == 80 || destPort == 80 || strstr(httpHeader, "HTTP") != NULL) {
                 printf("--------------HTTP---------------\n");
@@ -151,8 +150,7 @@ int paraseTLS(const struct tlsheader *header)
     showTLSType(header->recodtype);
     showTLSVersion(ntohs(header->version));
     printf("Length: %d\n", TLSlen);
-    if (flag == 23)
-    {
+    if (flag == 23) {
         int size = TLSlen > 32 ? 32 : TLSlen;
         uint8_t *data = (uint8_t *)((u_char *)header + sizeof(struct tlsheader));
         printf("Encrypted Application Data: ");
